@@ -87,6 +87,7 @@ namespace PluginTodoist
         private string filterName;
         private string projectName;
         private string type;
+        private int itemIndex;
         private string token;
         internal Measure()
         {
@@ -97,7 +98,9 @@ namespace PluginTodoist
             type = api.ReadString("Type", "Filter");
             filterName = api.ReadString("FilterName", "");
             projectName = api.ReadString("ProjectName", "");
-            TodoistPersister.TodoistPersister.instance.Token = api.ReadString("Token","");
+            itemIndex = api.ReadInt("itemIndex", -1);
+
+            TodoistPersister.TodoistPersister.instance.Token = api.ReadString("Token", "");
 
 
         }
@@ -113,21 +116,32 @@ namespace PluginTodoist
             try
             {
 
-            if (type == "Project")
-            {
-                return TodoistPersister.TodoistPersister.instance.getProjectAsString(projectName);
-            }
-            if (type == "Filter")
-            {
-                return TodoistPersister.TodoistPersister.instance.getFilterAsString(filterName);
-            }
-            return "settings incorrect";
+                if (type == "Project")
+                {
+                    if (itemIndex == -1)
+                        return TodoistPersister.TodoistPersister.instance.getProjectAsString(projectName);
+                    else
+                        return TodoistPersister.TodoistPersister.instance.getProjectAsString(projectName, itemIndex);
+
+                }
+                if (type == "Filter")
+                {
+                    if (itemIndex == -1)
+
+                        return TodoistPersister.TodoistPersister.instance.getFilterAsString(filterName);
+                    else
+                        return TodoistPersister.TodoistPersister.instance.getFilterAsString(filterName,itemIndex);
+
+
+
+                }
+                return "settings incorrect";
 
             }
             catch (Exception)
             {
                 return "Something went wrong";
-                
+
             }
         }
     }

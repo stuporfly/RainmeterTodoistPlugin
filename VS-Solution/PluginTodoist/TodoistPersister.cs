@@ -52,12 +52,35 @@ namespace TodoistPersister
         private DateTime LastResourceRefresh;
         public TodoistPersister()
         {
-            Debugger.Launch();
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3 | SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
         }
         private Resources res;
         private DateTime lastUpdate = DateTime.MinValue;
         public string getFilterAsString(string filterName)
+        {
+            string parameters = getFilterQueryParameter(filterName);
+            return getTasksAsOneString(parameters);
+
+        }
+        internal string getFilterAsString(string filterName, int itemIndex)
+        {
+            string parameters = getFilterQueryParameter(filterName);
+            return getTaskByIndexAsString(parameters, itemIndex);
+        }
+
+        private string getTaskByIndexAsString(string parameters, int itemIndex)
+        {
+            var resultItems = GetItemsByParams(parameters);
+
+            string result = "";
+            if (resultItems.Count() >= itemIndex + 1)
+                result = resultItems[itemIndex].Content;
+
+
+            return result;
+        }
+
+        string getFilterQueryParameter(string filterName)
         {
             if (TDClient == null)
             {
@@ -81,8 +104,7 @@ namespace TodoistPersister
             if (f == null)
                 return "could not find filter: " + filterName;
 
-            return getTasks("?filter=" + HttpUtility.UrlEncode(f.Query));
-
+            return "?filter=" + HttpUtility.UrlEncode(f.Query);
         }
 
 
@@ -112,15 +134,20 @@ namespace TodoistPersister
             if (p == null)
                 return "could not find project: " + projectName;
 
-            return getTasks("?project_id=" + p.Id);
+            return getTasksAsOneString("?project_id=" + p.Id);
 
 
         }
 
-        public string getTasks(string parameters)
+
+        internal string getProjectAsString(string projectName, int itemIndex)
+        {
+            throw new NotImplementedException();
+        }
+        public List<Item> GetItemsByParams(string parameters)
         {
             if (Token == "")
-                return "token is missing";
+                return new List<Item>(); //todo: Throw exception, log, show result from last successful request
 
             client.DefaultRequestHeaders.Authorization
              = new AuthenticationHeaderValue("Bearer", Token);
@@ -144,22 +171,29 @@ namespace TodoistPersister
                         resultitems.Add(realItem);
 
                 }
-                resultitems = resultitems.OrderByDescending(o => o.Priority).ToList() ;
+                resultitems = resultitems.OrderByDescending(o => o.Priority).ToList();
+                return resultitems;
+            }
+
+            else
+                return new List<Item>(); //todo: Throw exception, log, show result from last successful request
+
+
+        }
+        public string getTasksAsOneString(string parameters)
+        {
+            var resultItems = GetItemsByParams(parameters);
+           
                 string result = "";
-                foreach (var item in resultitems)
+                foreach (var item in resultItems)
                 {
-                    result = result + "* " + item.Content + Environment.NewLine;
+                    result = result + " • " + item.Content + Environment.NewLine;
 
                 }
 
                 return result;
-            }
-        
-            else
-                return "could not get tasks";
-
         }
 
 
-}
+    }
 }
